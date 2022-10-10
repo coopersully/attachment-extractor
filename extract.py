@@ -74,13 +74,15 @@ for (uid, message) in messages:
 
             # Build subdirectory to download to
             final_file_path = f"{directory}/"
-            if not os.path.isdir(final_file_path):
-                # Create the subdirectory if it doesn't exist
-                os.makedirs(final_file_path, exist_ok=True)
 
             # Alert the user of the download
             file_extension = attachment_name.split('.').pop(1)
             final_file_path += f'{ subject }_{ attachment_num }.{ file_extension }'
+
+            # If the file already exists, don't re-download it.
+            if os.path.isfile(final_file_path):
+                print(f'({i}/{total_attachments}) Skipping "{ attachment_name }" from "{ sender }"; already downloaded.')
+                continue
 
             # Download/write the file
             with open(final_file_path, "wb") as fp:
@@ -89,13 +91,13 @@ for (uid, message) in messages:
             if i == 1:
                 print()
 
-            print(f'({ i }/{ total_attachments }) Successfully downloaded "{attachment_name}" from "{sender}"... ')
+            print(f'({ i }/{ total_attachments }) Successfully downloaded "{ attachment_name }" from "{sender}"... ')
 
             # Increment counters
             attachment_num += 1
         except Exception as e:
 
-            print(f'({ i }/{ total_attachments }) Skipping "UNKNOWN" from "{sender}"; { str(e) }')
+            print(f'({ i }/{ total_attachments }) Skipping "UNKNOWN" from "{ sender }"; { str(e) }')
 
 mail.logout()
 
