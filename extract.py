@@ -44,20 +44,16 @@ total_attachments = 0
 attachment_num_global = 0
 
 # Iterate over every message found
-for (uid, message) in messages:
+for uid, message in messages:
 
     # Basic message info
     subject_raw: str = message.subject
-
     # Capitalize subject & fix odd spacing
     subject = subject_raw.strip().upper().replace("  ", " ")
-
     # Remove all non-alphanumeric characters
     subject = re.sub(r'[^A-Za-z0-9 ]+', '', subject)
-
     # Remove redundant tags and prefixes
     subject = subject[10:].replace("CALLERID", "").replace("PAGES", "")
-
     # Replace remaining spaces with _ for better corruption protection
     subject = subject.replace(" ", "_")
 
@@ -81,11 +77,16 @@ for (uid, message) in messages:
             file_extension = attachment_name.split('.').pop(1)
 
             # Build subdirectory to download to
-            final_file_path = f'{ directory }/{ subject }_{ attachment_num_message }.{ file_extension }'
+            subdirectory = f'{ directory }/{ int(uid) }'
+            if not os.path.isdir(subdirectory):
+                os.mkdir(subdirectory)
+
+            final_file_path = f'{ subdirectory }/{ subject }_{ attachment_num_message }.{ file_extension }'
 
             # If the file already exists, don't re-download it.
             if os.path.isfile(final_file_path):
-                print(f'({attachment_num_global}/{total_attachments}) Done.')  # Shorter message to separate from errors in terminal
+                # !! Shorter message to separate from errors in terminal
+                print(f'({attachment_num_global}/{total_attachments}) Done.')
                 continue
 
             # Download/write the file
