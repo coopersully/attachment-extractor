@@ -57,47 +57,46 @@ for (uid, message) in messages:
     # Replace remaining spaces with _ for better corruption protection
     subject = subject.replace(" ", "_")
 
-    sender_data: list = message.sent_from[0]
+    sender_data = message.sent_from[0]
     sender = sender_data['email']  # Extract from retrieved name/email list
 
     # Iterate over every attachment in the current message
-    attachments = message.attachments
+    attachments: list = message.attachments
     total_attachments = len(attachments)
     for idx, attachment in enumerate(attachments):
 
-        attachment_num = 0
+        # Reset counters per message
         i += 1
-        try:
+        attachment_num = 0
 
+        try:
             # Basic attachment info
             attachment_name: str = attachment.get('filename')
 
-            # Build subdirectory to download to
-            final_file_path = f"{directory}/"
-
             # Alert the user of the download
             file_extension = attachment_name.split('.').pop(1)
-            final_file_path += f'{ subject }_{ attachment_num }.{ file_extension }'
+
+            # Build subdirectory to download to
+            final_file_path = f'{ directory }/"{ subject }_{ attachment_num }.{ file_extension }'
 
             # If the file already exists, don't re-download it.
             if os.path.isfile(final_file_path):
-                print(f'({i}/{total_attachments}) Skipping "{ attachment_name }" from "{ sender }"; already downloaded.')
+                print(f'({i}/{total_attachments}) Done.')  # Shorter message to separate from errors in terminal
                 continue
 
             # Download/write the file
             with open(final_file_path, "wb") as fp:
                 fp.write(attachment.get('content').read())
 
-            if i == 1:
-                print()
-
-            print(f'({ i }/{ total_attachments }) Successfully downloaded "{ attachment_name }" from "{sender}"... ')
-
             # Increment counters
             attachment_num += 1
-        except Exception as e:
 
-            print(f'({ i }/{ total_attachments }) Skipping "UNKNOWN" from "{ sender }"; { str(e) }')
+            # Alert the user of the download completion
+            if i == 1: print()  # If it's the first line, print a newline for better formatting
+            print(f'({ i }/{ total_attachments }) Successfully downloaded "{ attachment_name }" from "{sender}"... ')
+        except Exception as e:
+            # Alert the user of the download error
+            print(f'({ i }/{ total_attachments }) Failed to download from "{ sender }"; { str(e) }')
 
 mail.logout()
 
