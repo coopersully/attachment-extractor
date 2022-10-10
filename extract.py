@@ -37,9 +37,11 @@ num_messages = messages.__len__()
 print(f'Found { num_messages } messages in your inbox.')
 print('Searching for attachments...')
 
-# Iterate over every message found
+# Reset counters
 total_attachments = 0
-i = 0
+attachment_num_global = 0
+
+# Iterate over every message found
 for (uid, message) in messages:
 
     # Basic message info
@@ -66,8 +68,8 @@ for (uid, message) in messages:
     for idx, attachment in enumerate(attachments):
 
         # Reset counters per message
-        i += 1
-        attachment_num = 0
+        attachment_num_global += 1
+        attachment_num_message = 0
 
         try:
             # Basic attachment info
@@ -77,11 +79,11 @@ for (uid, message) in messages:
             file_extension = attachment_name.split('.').pop(1)
 
             # Build subdirectory to download to
-            final_file_path = f'{ directory }/"{ subject }_{ attachment_num }.{ file_extension }'
+            final_file_path = f'{ directory }/"{ subject }_{ attachment_num_message }.{ file_extension }'
 
             # If the file already exists, don't re-download it.
             if os.path.isfile(final_file_path):
-                print(f'({i}/{total_attachments}) Done.')  # Shorter message to separate from errors in terminal
+                print(f'({attachment_num_global}/{total_attachments}) Done.')  # Shorter message to separate from errors in terminal
                 continue
 
             # Download/write the file
@@ -89,14 +91,17 @@ for (uid, message) in messages:
                 fp.write(attachment.get('content').read())
 
             # Increment counters
-            attachment_num += 1
+            attachment_num_message += 1
+
+            # If it's the first line, print a newline for better formatting
+            if attachment_num_global == 1:
+                print()
 
             # Alert the user of the download completion
-            if i == 1: print()  # If it's the first line, print a newline for better formatting
-            print(f'({ i }/{ total_attachments }) Successfully downloaded "{ attachment_name }" from "{sender}"... ')
+            print(f'({ attachment_num_global }/{ total_attachments }) Successfully downloaded "{ attachment_name }" from "{sender}"... ')
         except Exception as e:
             # Alert the user of the download error
-            print(f'({ i }/{ total_attachments }) Failed to download from "{ sender }"; { str(e) }')
+            print(f'({ attachment_num_global }/{ total_attachments }) Failed to download from "{ sender }"; { str(e) }')
 
 mail.logout()
 
