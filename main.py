@@ -31,7 +31,7 @@ mail = Imbox(
     ssl_context=None,
     starttls=False
 )
-messages = mail.messages()  # Fetch messages, defaults to "Inbox" inbox
+messages = mail.messages(sent_from='message@inbound.efax.com')  # Fetch messages, defaults to "Inbox" inbox
 
 print(f'Found { messages.__len__() } messages in your inbox.')
 print('Searching for attachments...')
@@ -42,8 +42,18 @@ for (uid, message) in messages:
 
     # Basic message info
     subject_raw: str = message.subject
-    subject = subject_raw.strip()
+
+    # Capitalize subject & fix odd spacing
+    subject = subject_raw.strip().upper().replace("  ", " ")
+
+    # Remove all non-alphanumeric characters
     subject = re.sub(r'[^A-Za-z0-9 ]+', '', subject)
+
+    # Remove redundant tags and prefixes
+    subject = subject[10:].replace("CALLERID", "").replace("PAGES", "")
+
+    # Replace remaining spaces with _ for better corruption protection
+    subject = subject.replace(" ", "_")
 
     sender_data: list = message.sent_from[0]
     sender = sender_data['email']  # Extract from retrieved name/email list
@@ -51,35 +61,33 @@ for (uid, message) in messages:
     # Iterate over every attachment in the current message
     for idx, attachment in enumerate(message.attachments):
 
+        attachment_num = 0
         try:
 
             # Basic attachment info
-            attachment_name = attachment.get('filename')
+            attachment_name: str = attachment.get('filename')
 
             # Build subdirectory to download to
-            subdir = f"{ directory }/{ sender }/{ subject }"
-            if not os.path.isdir(subdir):
-                # Create the subdirectory if it doesn't exist.
-                # !! It should NOT already exist beforehand.
-                os.makedirs(subdir, exist_ok=True)
-            else:
-                # If the subdirectory already exists locally, the file
-                # already exists as well. Don't re-download and overwrite,
-                # just keep going to the next file.
-                continue
-
-            # Increment counter
-            total_attachments += 1
+            final_file_path = f"{directory}/"
+            if not os.path.isdir(final_file_path):
+                # Create the subdirectory if it doesn't exist
+                os.makedirs(final_file_path, exist_ok=True)
 
             # Alert the user of the download
-            download_path = f"{ subdir }/{ attachment_name }"
+            file_extension = attachment_name.split('.').pop(1)
+            final_file_path += f'{ subject }_{ attachment_num }.{ file_extension }'
+            print(final_file_path)
+
             print()
             print(f'Downloading "{ attachment_name }" from "{ sender }"... ')
 
             # Download/write the file
-            with open(download_path, "wb") as fp:
+            with open(final_file_path, "wb") as fp:
                 fp.write(attachment.get('content').read())
 
+            # Increment counters
+            attachment_num += 1
+            total_attachments += 1
         except Exception as e:
             print(e)
 
