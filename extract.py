@@ -3,8 +3,29 @@ import os
 import re
 import sys
 from imbox import Imbox
+import filedate
+from datetime import datetime
 
-host = "imap.gmail.com"
+
+# Modifies the date of a file at a given file_path
+# to mimic the birthdate of the source_message given.
+def change_file_date(source_message, file_path):
+    # Retrieve the date of the source_message
+    date = source_message.date[5:]
+    date_formatted = datetime.strptime(date, "%d %b %Y %H:%M:%S %z")  # Given format
+    new_date_string = date_formatted.strftime("%Y.%m.%d %H:%M:%S")  # ISO Format
+
+    # Change the date on the file object
+    file = filedate.File(file_path)
+    file.set(
+        modified=new_date_string,
+        created=new_date_string,
+        accessed=new_date_string
+    )
+
+    # Write the new date to the file
+    filedate.File(file_path)
+
 
 # Load login file into memory
 login_file = open('login.json')
@@ -24,7 +45,7 @@ except KeyError as e:
 
 # Login to email address with credentials
 mail = Imbox(
-    host,
+    "imap.gmail.com",
     username=username,
     password=password,
     ssl=True,
@@ -36,16 +57,14 @@ mail = Imbox(
 messages = mail.messages(folder='all', raw='from:message@inbound.efax.com has:attachment')
 num_messages = messages.__len__()
 
-print(f'Found { num_messages } messages in your inbox.')
+print(f'Found {num_messages} messages in your inbox.')
 print('Searching for attachments...')
 
 # Reset counters
-total_attachments = 0
 attachment_num_global = 0
 
 # Iterate over every message found
 for uid, message in messages:
-
     # Basic message info
     subject_raw: str = message.subject
     # Capitalize subject & fix odd spacing
@@ -62,12 +81,11 @@ for uid, message in messages:
 
     # Iterate over every attachment in the current message
     attachments: list = message.attachments
-    total_attachments = len(attachments)
+    num_attachments_message = len(attachments)
     for idx, attachment in enumerate(attachments):
 
         # Reset counters per message
         attachment_num_global += 1
-        attachment_num_message = 0
 
         try:
             # Basic attachment info
@@ -77,39 +95,40 @@ for uid, message in messages:
             file_extension = attachment_name.split('.').pop(1)
 
             # Build subdirectory to download to
-            subdirectory = f'{ directory }/{ int(uid) }'
+            subdirectory = f'{directory}/{int(uid)}'
             if not os.path.isdir(subdirectory):
                 os.mkdir(subdirectory)
 
-            final_file_path = f'{ subdirectory }/{ subject }_{ attachment_num_message }.{ file_extension }'
+            final_file_path = f'{subdirectory}/{subject}_{num_attachments_message}.{file_extension}'
 
             # If the file already exists, don't re-download it.
             if os.path.isfile(final_file_path):
                 # !! Shorter message to separate from errors in terminal
-                print(f'({attachment_num_global}/{total_attachments}) Done.')
+                print(f'({attachment_num_global}/{num_attachments_message}) Done.')
                 continue
 
             # Download/write the file
             with open(final_file_path, "wb") as fp:
                 fp.write(attachment.get('content').read())
 
+            change_file_date(message, final_file_path)
+
             # Increment counters
-            attachment_num_message += 1
+            num_attachments_message += 1
 
             # If it's the first line, print a newline for better formatting
             if attachment_num_global == 1:
                 print()
 
             # Alert the user of the download completion
-            print(f'({ attachment_num_global }/{ total_attachments }) Successfully downloaded "{ attachment_name }" '
+            print(f'({attachment_num_global}/{num_messages}) Successfully downloaded "{final_file_path}" '
                   f'from {sender}... ')
         except Exception as e:
             # Alert the user of the download error
-            print(f'({ attachment_num_global }/{ total_attachments }) Failed to download from { sender }; { str(e) }')
-
+            print(f'({attachment_num_global}/{num_messages}) Failed to download from {sender}; {str(e)}')
 
 mail.logout()
 
 print()
 print('Complete!')
-print(f'Successfully downloaded { total_attachments } new attachments.')
+print(f'Successfully downloaded {attachment_num_global} new attachments.')
