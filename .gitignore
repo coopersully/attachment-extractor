@@ -1,3 +1,4 @@
 .idea/*
-output/*
+raw/*
+scanned/*
 login.json
