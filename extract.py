@@ -31,7 +31,9 @@ mail = Imbox(
     ssl_context=None,
     starttls=False
 )
-messages = mail.messages(sent_from='message@inbound.efax.com')  # Fetch messages, defaults to "Inbox" inbox
+
+# Fetch all messages that have attachments
+messages = mail.messages(folder='all', raw='from:message@inbound.efax.com has:attachment')
 num_messages = messages.__len__()
 
 print(f'Found { num_messages } messages in your inbox.')
@@ -98,10 +100,11 @@ for (uid, message) in messages:
                 print()
 
             # Alert the user of the download completion
-            print(f'({ attachment_num_global }/{ total_attachments }) Successfully downloaded "{ attachment_name }" from "{sender}"... ')
+            print(f'({ attachment_num_global }/{ total_attachments }) Successfully downloaded "{ attachment_name }" '
+                  f'from {sender}... ')
         except Exception as e:
             # Alert the user of the download error
-            print(f'({ attachment_num_global }/{ total_attachments }) Failed to download from "{ sender }"; { str(e) }')
+            print(f'({ attachment_num_global }/{ total_attachments }) Failed to download from { sender }; { str(e) }')
 
 mail.logout()
 
