@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 from imbox import Imbox
 
@@ -40,7 +41,10 @@ total_attachments = 0
 for (uid, message) in messages:
 
     # Basic message info
-    subject = message.subject
+    subject_raw: str = message.subject
+    subject = subject_raw.strip()
+    subject = re.sub(r'[^A-Za-z0-9 ]+', '', subject)
+
     sender_data: list = message.sent_from[0]
     sender = sender_data['email']  # Extract from retrieved name/email list
 
