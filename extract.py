@@ -81,7 +81,7 @@ for (uid, message) in messages:
             file_extension = attachment_name.split('.').pop(1)
 
             # Build subdirectory to download to
-            final_file_path = f'{ directory }/"{ subject }_{ attachment_num_message }.{ file_extension }'
+            final_file_path = f'{ directory }/{ subject }_{ attachment_num_message }.{ file_extension }'
 
             # If the file already exists, don't re-download it.
             if os.path.isfile(final_file_path):
@@ -105,6 +105,7 @@ for (uid, message) in messages:
         except Exception as e:
             # Alert the user of the download error
             print(f'({ attachment_num_global }/{ total_attachments }) Failed to download from { sender }; { str(e) }')
+
 
 mail.logout()
 
