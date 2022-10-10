@@ -14,7 +14,7 @@ login_json = json.load(login_file)
 try:
     username = login_json['username']
     password = login_json['password']
-    directory = login_json['directory']
+    directory = login_json['directory_raw']
     if not os.path.isdir(directory):
         os.makedirs(directory, exist_ok=True)
 except KeyError as e:
@@ -32,12 +32,14 @@ mail = Imbox(
     starttls=False
 )
 messages = mail.messages(sent_from='message@inbound.efax.com')  # Fetch messages, defaults to "Inbox" inbox
+num_messages = messages.__len__()
 
-print(f'Found { messages.__len__() } messages in your inbox.')
+print(f'Found { num_messages } messages in your inbox.')
 print('Searching for attachments...')
 
 # Iterate over every message found
 total_attachments = 0
+i = 0
 for (uid, message) in messages:
 
     # Basic message info
@@ -59,9 +61,12 @@ for (uid, message) in messages:
     sender = sender_data['email']  # Extract from retrieved name/email list
 
     # Iterate over every attachment in the current message
-    for idx, attachment in enumerate(message.attachments):
+    attachments = message.attachments
+    total_attachments = len(attachments)
+    for idx, attachment in enumerate(attachments):
 
         attachment_num = 0
+        i += 1
         try:
 
             # Basic attachment info
@@ -76,20 +81,21 @@ for (uid, message) in messages:
             # Alert the user of the download
             file_extension = attachment_name.split('.').pop(1)
             final_file_path += f'{ subject }_{ attachment_num }.{ file_extension }'
-            print(final_file_path)
-
-            print()
-            print(f'Downloading "{ attachment_name }" from "{ sender }"... ')
 
             # Download/write the file
             with open(final_file_path, "wb") as fp:
                 fp.write(attachment.get('content').read())
 
+            if i == 1:
+                print()
+
+            print(f'({ i }/{ total_attachments }) Successfully downloaded "{attachment_name}" from "{sender}"... ')
+
             # Increment counters
             attachment_num += 1
-            total_attachments += 1
         except Exception as e:
-            print(e)
+
+            print(f'({ i }/{ total_attachments }) Skipping "UNKNOWN" from "{sender}"; { str(e) }')
 
 mail.logout()
 
