@@ -12,8 +12,11 @@ poppler_path = r'C:\Program Files\poppler-22.04.0-hea5ffa9_2\Library\bin'
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
-def ocr_files(input_folder: str, output_folder: str):
+def get_uid(file):
+    return int(file)
 
+
+def ocr_files(input_folder: str, output_folder: str, starting_index: int):
     print("Converting all files in " + input_folder + "...")
 
     '''
@@ -21,8 +24,11 @@ def ocr_files(input_folder: str, output_folder: str):
     and append them to the set object "all_files."
     '''
     all_files = []
+    all_subdirs = []
     for (path, dirs, files) in os.walk(input_folder):
         for file in files:
+            path: str
+            all_subdirs.append(path.removeprefix(input_folder).replace("\\", ""))
             file = os.path.join(path, file)
             all_files.append(file)
 
@@ -33,15 +39,18 @@ def ocr_files(input_folder: str, output_folder: str):
         print("Exiting program.")
         sys.exit()
 
+    all_subdirs.sort(key=get_uid)
+    actual_starting_index = all_subdirs.index(str(starting_index))
+
     '''
     Use PyTesseract to OCR (Optical Character Recognition)
     every file, and add it to the PDF Writer object.
     '''
     failed_files = 0
-    i = 0
-    for file in all_files:
 
-        i += 1
+    for i in range(actual_starting_index + 1, len(all_files)):
+
+        file = all_files[i]
 
         fixed_file_name = file[file.find("\\") + 1:file.find(".")]
         fixed_file_name.replace("\\", "/")
@@ -53,7 +62,8 @@ def ocr_files(input_folder: str, output_folder: str):
             continue
 
         subdir = output_folder + "/" + uid
-        os.mkdir(subdir)
+        if not os.path.isdir(subdir):
+            os.mkdir(subdir)
 
         pdf_writer = PyPDF2.PdfFileWriter()
         try:
@@ -69,7 +79,7 @@ def ocr_files(input_folder: str, output_folder: str):
             if failed_files == 0:
                 print()
 
-            print(f"({ i }/{ num_files }) Skipping { file }; { str(e) }")
+            print(f"({i}/{num_files}) Skipping {file}; {str(e)}")
             failed_files += 1
 
         '''
@@ -82,7 +92,7 @@ def ocr_files(input_folder: str, output_folder: str):
         with open(output_file, "wb") as page_to_write:
             pdf_writer.write(page_to_write)
 
-        print(f"({ i }/{ num_files }) Successfully converted { file }")
+        print(f"({i}/{num_files}) Successfully converted {file}")
         sqlite_manager.scan(uid)
 
     num_files = all_files.__len__()
@@ -90,4 +100,4 @@ def ocr_files(input_folder: str, output_folder: str):
 
     print()
     print("Conversion complete!")
-    print(f"Successfully converted { num_converted }/{ num_files } input file(s) into (a) searchable pdf document(s).")
+    print(f"Successfully converted {num_converted}/{num_files} input file(s) into (a) searchable pdf document(s).")

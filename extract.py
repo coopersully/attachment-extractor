@@ -4,6 +4,7 @@ from datetime import datetime
 
 import filedate
 from imbox import Imbox
+import imbox.vendors as vendors
 
 import sqlite_manager
 
@@ -47,14 +48,23 @@ def attempt_login(login_username, login_password):
     )
 
 
-def download_attachments(directory: str):
+def get_uid(message):
+    return int(message.uid)
+
+
+def download_attachments(directory: str, starting_uid: int = 0):
 
     # Fetch all messages that have attachments
-    messages = account.messages(folder='all', raw='from:message@inbound.efax.com has:attachment')
+    messages: vendors.GmailMessages = account.messages(
+        folder='all',
+        raw='from:message@inbound.efax.com has:attachment',
+        uid__range=f'{ starting_uid + 1 }:*'
+    )
     num_messages = messages.__len__()
 
-    print(f'Found {num_messages} messages in your inbox.')
-    print('Searching for attachments...')
+    print(f'Found { num_messages } new messages in your inbox.')
+    print('Searching messages for attachments...')
+    print()
 
     # Reset counters
     attachment_num_global = 0
@@ -62,6 +72,7 @@ def download_attachments(directory: str):
     # Iterate over every message found
     for uid, message in messages:
 
+        # If the message is already exported, continue
         if sqlite_manager.is_exported(uid):
             attachment_num_global += 1
             print(f'({attachment_num_global}/{num_messages}) Done.')

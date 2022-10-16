@@ -1,6 +1,9 @@
 import json
 import os
 import sys
+import time
+
+import schedule as schedule
 
 import extract
 import ocr
@@ -51,16 +54,35 @@ def fetch_login():
         sys.exit()
 
 
-if __name__ == '__main__':
-
+def refresh_library():
     # Connect to SQLite3 database
     sqlite_manager.create_or_connect()
 
     fetch_login()
     extract.attempt_login(username, password)
 
+    # Get latest downloaded email
+    exported_index = sqlite_manager.get_latest_exported_email()
+    print(f'Starting exportation at email with UID: "{exported_index}"')
+
     # Download attachments
-    extract.download_attachments(input_folder)
+    extract.download_attachments(input_folder, exported_index)
+
+    # Get latest scanned email
+    scanned_index = sqlite_manager.get_latest_scanned_email()
+    print(f'Starting optical-character-recognition at email with UID: "{scanned_index}"')
 
     # OCR new attachments
-    ocr.ocr_files(input_folder, output_folder)
+    ocr.ocr_files(input_folder, output_folder, scanned_index)
+
+
+if __name__ == '__main__':
+
+    # Repeat every 1hr
+    schedule.every(1).hours.do(refresh_library)
+    refresh_library()
+
+    # Check for pending tasks and run them
+    while True:
+        schedule.run_pending()
+        time.sleep(1)

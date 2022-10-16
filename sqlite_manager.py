@@ -132,12 +132,27 @@ def bool_to_int(value: bool):
     return 0
 
 
-# Fetches the email in the database with the highest UID
-# that has been exported and scanned; returns its uid (int).
-def get_latest_email():
+# Fetches the email in the database with the highest
+# UID that has been exported; returns its uid (int).
+def get_latest_exported_email():
     with conn:
-        curr.execute("SELECT max(uid) FROM messages WHERE exported = 1 AND scanned = 1")
-    return curr.fetchone()
+        curr.execute("SELECT max(uid) FROM messages WHERE exported=1")
+    result = curr.fetchone()[0]
+    if result is None:
+        return 0
+    return int(result)
+
+
+# Fetches the email in the database with the highest
+# UID that has been exported; returns its uid (int).
+def get_latest_scanned_email():
+    with conn:
+        curr.execute("SELECT max(uid) FROM messages WHERE scanned=1")
+    result = curr.fetchone()[0]
+    if result is None:
+        return 0
+    return int(result)
+
 
 
 if __name__ == "__main__":
