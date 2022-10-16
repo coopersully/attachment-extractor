@@ -2,3 +2,7 @@
 raw/*
 scanned/*
 login.json
+**/__pycache__
+*.db
+*.sqlite
+identifier.sqlite

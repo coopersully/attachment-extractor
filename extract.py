@@ -6,6 +6,8 @@ from imbox import Imbox
 import filedate
 from datetime import datetime
 
+import sqlite_manager
+
 username = ""
 password = ""
 directory = ""
@@ -77,6 +79,8 @@ def attempt_login(login_username, login_password):
 
 if __name__ == "__main__":
 
+    sqlite_manager.create_or_connect()
+
     fetch_login()
     attempt_login(username, password)
 
@@ -92,6 +96,12 @@ if __name__ == "__main__":
 
     # Iterate over every message found
     for uid, message in messages:
+
+        if sqlite_manager.is_exported(uid):
+            attachment_num_global += 1
+            print(f'({attachment_num_global}/{num_messages}) Done.')
+            continue
+
         # Basic message info
         subject_raw: str = message.subject
         # Capitalize subject & fix odd spacing
@@ -128,12 +138,6 @@ if __name__ == "__main__":
 
                 final_file_path = f'{subdirectory}/{subject}_{num_attachments_message}.{file_extension}'
 
-                # If the file already exists, don't re-download it.
-                if os.path.isfile(final_file_path):
-                    # !! Shorter message to separate from errors in terminal
-                    print(f'({attachment_num_global}/{num_attachments_message}) Done.')
-                    continue
-
                 # Download/write the file
                 with open(final_file_path, "wb") as fp:
                     fp.write(attachment.get('content').read())
@@ -153,6 +157,8 @@ if __name__ == "__main__":
             except Exception as e:
                 # Alert the user of the download error
                 print(f'({attachment_num_global}/{num_messages}) Failed to download from {sender}; {str(e)}')
+
+        sqlite_manager.export(uid) # Log message as exported
 
     account.logout()
 
