@@ -1,3 +1,4 @@
+import _io
 import io
 import json
 import os
@@ -30,9 +31,8 @@ if __name__ == '__main__':
     except KeyError as e:
         print('Error loading directories')
         print('Please provide all fields in login.json')
-        sys.exit()
+        sys.exit()  # Exit program
 
-    print()
     print("Converting all files in " + input_folder + "...")
 
     '''
@@ -95,7 +95,9 @@ if __name__ == '__main__':
         Open the PDF file for writing, truncating the file first and opening
         it in binary mode. Write the recognized page above to a new document.
         '''
-        output_file = output_folder + "/" + fixed_file_name + ".pdf"
+        output_file = f'{output_folder}/{fixed_file_name}.pdf'
+
+        page_to_write: _io.BufferedWriter
         with open(output_file, "wb") as page_to_write:
             pdf_writer.write(page_to_write)
 
