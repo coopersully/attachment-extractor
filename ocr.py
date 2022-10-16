@@ -1,6 +1,5 @@
 import _io
 import io
-import json
 import os
 import sys
 
@@ -12,26 +11,8 @@ import sqlite_manager
 poppler_path = r'C:\Program Files\poppler-22.04.0-hea5ffa9_2\Library\bin'
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-if __name__ == '__main__':
 
-    sqlite_manager.create_or_connect()
-
-    # Load login file into memory
-    login_file = open('login.json')
-    login_json = json.load(login_file)
-
-    # Parse login file and exit if fails
-    try:
-        input_folder = login_json['directory_raw']
-        if not os.path.isdir(input_folder):
-            os.makedirs(input_folder, exist_ok=True)
-        output_folder = login_json['directory_scanned']
-        if not os.path.isdir(output_folder):
-            os.makedirs(output_folder, exist_ok=True)
-    except KeyError as e:
-        print('Error loading directories')
-        print('Please provide all fields in login.json')
-        sys.exit()  # Exit program
+def ocr_files(input_folder: str, output_folder: str):
 
     print("Converting all files in " + input_folder + "...")
 

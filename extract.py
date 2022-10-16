@@ -1,17 +1,13 @@
-import json
 import os
 import re
-import sys
-from imbox import Imbox
-import filedate
 from datetime import datetime
+
+import filedate
+from imbox import Imbox
 
 import sqlite_manager
 
-username = ""
-password = ""
-directory = ""
-account: Imbox = None
+account: Imbox
 
 
 # Modifies the date of a file at a given file_path
@@ -34,32 +30,6 @@ def change_file_date(source_message, file_path):
     filedate.File(file_path)
 
 
-# Grab the email's login details from login.json
-# and make the export directory if need be.
-def fetch_login():
-
-    global username
-    global password
-    global directory
-
-    # Load login file into memory
-    login_file = open('login.json')
-    login_json = json.load(login_file)
-
-    # Parse login file and exit if fails
-    try:
-        username = login_json['username']
-        password = login_json['password']
-
-        # If the directory doesn't exist, create it
-        directory = login_json['directory_raw']
-        if not os.path.isdir(directory):
-            os.makedirs(directory, exist_ok=True)
-    except KeyError as e:
-        print(f'Error loading username, password, or directory; please provide all fields in login.json')
-        sys.exit()
-
-
 # Attempt to log in to Gmail's servers with
 # the fetched email address and password
 def attempt_login(login_username, login_password):
@@ -77,12 +47,7 @@ def attempt_login(login_username, login_password):
     )
 
 
-if __name__ == "__main__":
-
-    sqlite_manager.create_or_connect()
-
-    fetch_login()
-    attempt_login(username, password)
+def download_attachments(directory: str):
 
     # Fetch all messages that have attachments
     messages = account.messages(folder='all', raw='from:message@inbound.efax.com has:attachment')
@@ -158,7 +123,7 @@ if __name__ == "__main__":
                 # Alert the user of the download error
                 print(f'({attachment_num_global}/{num_messages}) Failed to download from {sender}; {str(e)}')
 
-        sqlite_manager.export(uid) # Log message as exported
+        sqlite_manager.export(uid)  # Log message as exported
 
     account.logout()
 

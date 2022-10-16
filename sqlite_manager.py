@@ -3,19 +3,26 @@ import sqlite3
 
 conn: sqlite3.Connection
 curr: sqlite3.Cursor
+DATABASE: str = 'EMAILS.DB'
 
 
 # Connects to the pre-existing database in the set directory.
 # If the database does not exist in the set directory, one is
 # created and then a connection is established.
 def create_or_connect():
-    global conn, curr
-    did_exist = False
-    if os.path.isfile("emails.db"):
-        did_exist = True
-    print('Connecting to database...')
+
+    global conn
+    global curr
+
+    # Determine if database existed before-hand
+    did_exist = os.path.isfile(DATABASE)
+
+    print(f'Establishing database connection...')
     conn = sqlite3.connect("emails.db")
     curr = conn.cursor()
+
+    # Alert the user & create a new table
+    # if one does/did not already exist.
     if not did_exist:
         print('No database was found; creating a new database with \'messages\' table.')
         create_table()
