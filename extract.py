@@ -13,7 +13,7 @@ account: Imbox
 
 # Modifies the date of a file at a given file_path
 # to mimic the birthdate of the source_message given.
-def change_file_date(source_message, file_path):
+def change_file_date(source_message, file_path) -> None:
     # Retrieve the date of the source_message
     date = source_message.date[5:]
     date_formatted = datetime.strptime(date, "%d %b %Y %H:%M:%S %z")  # Given format
@@ -33,7 +33,7 @@ def change_file_date(source_message, file_path):
 
 # Attempt to log in to Gmail's servers with
 # the fetched email address and password
-def attempt_login(login_username, login_password):
+def attempt_login(login_username, login_password) -> None:
 
     global account
 
@@ -48,7 +48,7 @@ def attempt_login(login_username, login_password):
     )
 
 
-def get_uid(message):
+def get_uid(message) -> int:
     return int(message.uid)
 
 

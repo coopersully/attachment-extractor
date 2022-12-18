@@ -12,11 +12,11 @@ poppler_path = r'C:\Program Files\poppler-22.04.0-hea5ffa9_2\Library\bin'
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 
-def get_uid(file):
+def get_uid(file) -> int:
     return int(file)
 
 
-def ocr_files(input_folder: str, output_folder: str, starting_index: int):
+def ocr_files(input_folder: str, output_folder: str, starting_index: int) -> None:
     print("Converting all files in " + input_folder + "...")
 
     '''
@@ -24,11 +24,11 @@ def ocr_files(input_folder: str, output_folder: str, starting_index: int):
     and append them to the set object "all_files."
     '''
     all_files = []
-    all_subdirs = []
+    all_subdirectories = []
     for (path, dirs, files) in os.walk(input_folder):
         for file in files:
             path: str
-            all_subdirs.append(path.removeprefix(input_folder).replace("\\", ""))
+            all_subdirectories.append(path.removeprefix(input_folder).replace("\\", ""))
             file = os.path.join(path, file)
             all_files.append(file)
 
@@ -39,8 +39,8 @@ def ocr_files(input_folder: str, output_folder: str, starting_index: int):
         print("Exiting program.")
         sys.exit()
 
-    all_subdirs.sort(key=get_uid)
-    actual_starting_index = all_subdirs.index(str(starting_index))
+    all_subdirectories.sort(key=get_uid)
+    actual_starting_index = all_subdirectories.index(str(starting_index))
 
     '''
     Use PyTesseract to OCR (Optical Character Recognition)
@@ -55,13 +55,13 @@ def ocr_files(input_folder: str, output_folder: str, starting_index: int):
         fixed_file_name = file[file.find("\\") + 1:file.find(".")]
         fixed_file_name.replace("\\", "/")
 
-        uid = fixed_file_name[:4]
+        uid = int(fixed_file_name[:4])
 
         if sqlite_manager.is_scanned(uid):
             print(f"({i}/{num_files}) Done.")
             continue
 
-        subdir = output_folder + "/" + uid
+        subdir = f'{output_folder}/{uid}'
         if not os.path.isdir(subdir):
             os.mkdir(subdir)
 
